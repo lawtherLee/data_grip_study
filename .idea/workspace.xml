@@ -4,7 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1b80e540-49b1-446c-a3a0-f1981c29fb53" name="更改" comment="" />
+    <list default="true" id="1b80e540-49b1-446c-a3a0-f1981c29fb53" name="更改" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/dataSources/f925c677-d4f3-49a8-8b9b-f1a8fc92856e/storage_v2/_src_/schema/day01.nRKvBQ.meta" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/单表查询.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/f925c677-d4f3-49a8-8b9b-f1a8fc92856e.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/f925c677-d4f3-49a8-8b9b-f1a8fc92856e.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/data_source_mapping.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/data_source_mapping.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sqldialects.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sqldialects.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DDL语句.sql" beforeDir="false" afterPath="$PROJECT_DIR$/DDL语句.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DML语句.sql" beforeDir="false" afterPath="$PROJECT_DIR$/DML语句.sql" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -20,6 +30,9 @@
   &quot;associatedIndex&quot;: 8
 }</component>
   <component name="ProjectId" id="39yAS8SZz8xpUSqCcAXGMcaFpyz" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />

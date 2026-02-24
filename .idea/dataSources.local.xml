@@ -12,10 +12,7 @@
       <user-name>root</user-name>
       <schema-mapping>
         <introspection-scope>
-          <node kind="schema">
-            <name qname="day01" />
-            <name qname="my_db_01" />
-          </node>
+          <node kind="schema" qname="my_db_01" />
         </introspection-scope>
       </schema-mapping>
     </data-source>

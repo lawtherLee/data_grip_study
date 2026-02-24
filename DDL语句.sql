@@ -1,4 +1,4 @@
-# -----------------------------------------DDL--------------------------------------------
+# -----------------------------DDL（库表基本操作）------------------------------------
 show databases;
 
 # 创建数据库
@@ -39,6 +39,7 @@ alter table users
 alter table users
     modify address varchar(10) not null;
 
+# 修改字段名
 alter table users
     change address addr varchar(20) not null;
 
