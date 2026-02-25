@@ -6,7 +6,7 @@ create database if not exists day01 charset 'utf8';
 create database if not exists day02 charset 'utf8';
 
 # 查看数据库信息
-show create database if not exists day01;
+show create database if not exists my_db_01;
 
 
 drop database day02;
