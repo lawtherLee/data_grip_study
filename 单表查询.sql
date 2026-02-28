@@ -109,10 +109,10 @@ select category_id, count(*)
 from product
 group by category_id;
 #2 统计各个分类商品的个数,且只显示个数大于1的信息
-SELECT category_id, COUNT(*)
-FROM product
-GROUP BY category_id
-HAVING COUNT(*) > 1;
+select category_id, count(*)
+from product
+group by category_id
+having count(*) > 1;
 
 #3 根据分组实现去重
 select category_id from product group by category_id;
@@ -124,7 +124,6 @@ select distinct product.category_id from product;
  总条数: count函数
  每页起始索引: (当前页数 - 1) * 每页条数
  总页数: (数据总条数 + 每页条数 - 1) // 每页条数
-
  */
 select * from product limit 3;    # 0可省略
 select * from product limit 3, 3; # 第二页

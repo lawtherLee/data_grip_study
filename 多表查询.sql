@@ -33,3 +33,4 @@ select * from hero h, kongfu kf where h.kongfu_id = kf.kid; # 效果同上
 # 外连接 表的差集
 select * from hero h left join kongfu kf on h.kongfu_id = kf.kid; #左表全 右表交集
 select * from hero h right join kongfu kf on h.kongfu_id = kf.kid; #右表全 左表交集
+
