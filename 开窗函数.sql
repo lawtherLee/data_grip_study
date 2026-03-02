@@ -102,4 +102,15 @@ from t1;
 select *,
        ntile(2) over (partition by employee.deptid) ntile_val,
        lag(salary, 2) over(partition by deptid) lag_val #当前行往上数2个 lead 往下数
-from employee
+from employee;
+
+# ------------------------------条件分支语句---------------------------------
+select *,
+       case
+           when employee.deptid = 10 then '蜀'
+           when employee.deptid = 20 then '魏'
+           else '吴'
+           end as '所属国'
+from employee;
+
+
