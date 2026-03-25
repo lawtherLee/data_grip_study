@@ -54,34 +54,8 @@ FROM products p
          JOIN suppliers s ON p.supplier_id = s.supplier_id
 GROUP BY p.supplier_id, s.company_name;
 
-# step2: 计算每个供应商, 供应的商品总数, 筛选出 提供了4种以上不同商品的 供应商及其供应的商品总数.
-SELECT p.supplier_id,
-       company_name,                       # 分组字段: 供应商的id, 公司名.
-       COUNT(product_id) AS products_count # 计算: 商品的总数
-FROM products p
-         join
-     suppliers s ON p.supplier_id = s.supplier_id
-GROUP BY
-    # p.supplier_id, company_name      # 根据供应商id, 公司名 分组.
-    p.supplier_id, s.company_name # 根据供应商id 分组.
-HAVING products_count > 4;
-
 -- 需求5: 提取订单编号为10250的订单详情, 显示如下信息：
 -- product_name, quantity, unit_price （ order_items 表), discount , order_date 按商品名字排序
--- 先连接 后筛选
-SELECT product_name, quantity, oi.unit_price, discount, order_date
-FROM orders o
-         JOIN order_items oi ON o.order_id = oi.order_id
-         JOIN products p ON p.product_id = oi.product_id
-WHERE o.order_id = 10250
-ORDER BY p.product_name;
--- 先筛选 后连接
-SELECT product_name, quantity, oi.unit_price, discount, order_date
-FROM orders o
-         JOIN (SELECT * FROM order_items WHERE order_id = 10250) oi ON o.order_id = oi.order_id
-         JOIN products p ON p.product_id = oi.product_id
-WHERE o.order_id = 10250
-ORDER BY p.product_name;
 
 
 -- 需求6: 收集运输到法国的订单的相关信息，包括订单涉及的顾客和员工信息，下单和发货日期等.
@@ -109,56 +83,25 @@ FROM employees e
 WHERE o.ship_country = 'France';
 
 # step3: 验真.
-select *
-from orders
-where ship_country = 'France';
+SELECT *
+FROM orders
+WHERE ship_country = 'France';
 # 77条
 
--- 需求7: 提供订单编号为10248的相关信息，
--- 包括product name, unit price (在 order_items 表中),
+-- 需求7: 提供订单编号为10248的相关信息，包括product name, unit price (在 order_items 表中),
 -- quantity（数量）,company_name（供应商公司名字 ，起别名 supplier_name).
 SELECT product_name, oi.unit_price, quantity, company_name AS supplier_name
 FROM order_items oi
-         JOIN products p ON p.product_id = oi.product_id
+         JOIN products p ON oi.product_id = p.product_id
          JOIN suppliers s ON s.supplier_id = p.supplier_id
 WHERE order_id = 10248;
 
+
 -- 需求8:  提取每件商品的详细信息，包括 商品名称（product_name）, 供应商的公司名称 (company_name，在 suppliers 表中),
 -- 类别名称 category_name, 商品单价unit_price, 和每单位商品数量quantity per unit
-# 显示内连接
-SELECT product_name, company_name, category_name, unit_price, quantity_per_unit
-FROM products p
-         JOIN suppliers s ON s.supplier_id = p.supplier_id
-         JOIN categories c ON c.category_id = p.category_id;
-# 隐式内连接
-SELECT product_name, company_name, category_name, unit_price, quantity_per_unit
-FROM products p,
-     categories c,
-     suppliers s
-WHERE c.category_id = p.category_id
-  AND s.supplier_id = product_id;
 
 -- 需求9: 另一种常见的报表需求是查询某段时间内的业务指标, 我们统计2016年7月的订单数量，
-# 思路1: 模糊查询
-SELECT *
-FROM orders
-WHERE order_date LIKE '2016-07%';
-# 思路2: 范围查询.
-SELECT *
-FROM orders
-WHERE order_date >= '2016-07-01'
-  AND order_date <= '2016-07-31';
-SELECT *
-FROM orders
-WHERE order_date BETWEEN '2016-07-01' AND '2016-07-31';
-# 思路3: 函数实现.
-SELECT YEAR('2016-07-01 00:00:00'); # 获取 年份
-SELECT MONTH('2016-07-01 00:00:00'); # 获取 月份
-SELECT DAY('2016-07-01 00:00:00'); # 获取 天(月中的第几天)
-SELECT *
-FROM orders
-WHERE YEAR(order_date) = 2016
-  AND MONTH(order_date) = 7;
+
 -- 需求11: 统计每个供应商供应的商品种类数量, 结果返回供应商IDsupplier_id
 -- ，公司名字company_name ，商品种类数量（起别名products_count )使用 products 和 suppliers 表.
 
