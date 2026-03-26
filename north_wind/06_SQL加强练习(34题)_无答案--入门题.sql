@@ -109,9 +109,9 @@ FROM employees e
 WHERE o.ship_country = 'France';
 
 # step3: 验真.
-select *
-from orders
-where ship_country = 'France';
+SELECT *
+FROM orders
+WHERE ship_country = 'France';
 # 77条
 
 -- 需求7: 提供订单编号为10248的相关信息，
@@ -159,30 +159,76 @@ SELECT *
 FROM orders
 WHERE YEAR(order_date) = 2016
   AND MONTH(order_date) = 7;
--- 需求11: 统计每个供应商供应的商品种类数量, 结果返回供应商IDsupplier_id
+
+-- 需求11: 统计每个供应商供应的商品种类数量, 结果返回供应商ID supplier_id
 -- ，公司名字company_name ，商品种类数量（起别名products_count )使用 products 和 suppliers 表.
+# 思路1: 求交集.  如果供应商没有供应商品, 我们就不显示.
+SELECT p.supplier_id, s.company_name, COUNT(product_id) as products_count
+FROM products p
+         JOIN suppliers s ON s.supplier_id = p.supplier_id
+GROUP BY p.supplier_id, s.company_name;
+# 思路2: 求差集.  即使供应商没有供应商品, 我们也显示这个供应商的信息.
+SELECT p.supplier_id, s.company_name, COUNT(product_id) as products_count
+FROM products p
+         LEFT JOIN suppliers s ON s.supplier_id = p.supplier_id
+GROUP BY p.supplier_id, s.company_name;
 
 -- 需求12: 我们要查找ID为10250的订单的总价（折扣前），SUM(unit_price * quantity)
+SELECT SUM(unit_price * quantity) AS total_price
+FROM order_items
+WHERE order_id = 10250;
 
--- 需求13:  统计每个员工处理的订单总数, 结果包含员工IDemployee_id，姓名first_name 和 last_name，处理的订单总数(别名 orders_count)
+-- 需求13:  统计每个员工处理的订单总数, 结果包含员工ID employee_id，姓名first_name 和 last_name，
+-- 处理的订单总数(别名 orders_count)
+# 场景1: 只统计有订单的 员工的情况.   交集: 内连接.
+SELECT e.employee_id, e.last_name, e.first_name, COUNT(order_id) AS orders_count
+FROM employees e
+         JOIN orders o ON e.employee_id = o.employee_id
+GROUP BY e.employee_id, e.last_name, e.first_name;
+# 场景2: 查看所有员工的订单总数, 哪怕为0.  差集: 左外连接.
+SELECT e.employee_id, e.last_name, e.first_name, COUNT(order_id) AS orders_count
+FROM employees e
+         LEFT JOIN orders o ON e.employee_id = o.employee_id
+GROUP BY e.employee_id, e.last_name, e.first_name;
 
--- 需求14: 统计每个类别中的库存产品值多少钱？显示三列：category_id, category_name, 和 category_total_value, 如何计算库存商品总价：SUM(unit_price * units_in_stock)。
+-- 需求14: 统计每个类别中的库存产品值多少钱？显示三列：category_id, category_name, 和 category_total_value,
+-- 如何计算库存商品总价：SUM(unit_price * units_in_stock)。
+SELECT c.category_id, c.category_name, SUM(unit_price * units_in_stock) AS category_total_value
+FROM categories c
+         JOIN products p ON c.category_id = p.category_id
+GROUP BY c.category_id, category_name;
 
 -- 需求15: 计算每个员工的订单数量
+SELECT e.employee_id, e.last_name, e.first_name, COUNT(order_id) AS total_cnt
+FROM employees e
+         LEFT JOIN orders o ON e.employee_id = o.employee_id
+GROUP BY employee_id;
 
 
 -- 需求16: 计算每个客户的下订单数 结果包含：用户id、用户公司名称、订单数量（customer_id, company_name, orders_count ）
-
+SELECT c.customer_id, c.company_name, COUNT(o.order_id) as orders_count
+FROM customers c
+         LEFT JOIN orders o ON c.customer_id = o.customer_id
+GROUP BY c.customer_id;
 
 -- 需求17: 统计2016年6月到2016年7月用户的总下单金额并按金额从高到低排序
 -- 结果包含：顾客公司名称company_name 和总下单金额（折后实付金额）total_paid
 -- 提示：
 -- 计算实际总付款金额： SUM(unit_price quantity (1 - discount))
 -- 日期过滤 WHERE order_date >= '2016-06-01' AND order_date < '2016-08-01'
+SELECT c.customer_id, c.company_name, SUM(unit_price * quantity * (1 - discount)) AS total_paid
+FROM customers c
+         JOIN (SELECT * FROM orders WHERE YEAR(order_date) = 2016 AND MONTH(order_date) IN (6, 7)) o
+              ON c.customer_id = o.customer_id
+         JOIN order_items oi ON oi.order_id = o.order_id
+GROUP BY c.customer_id
+ORDER BY total_paid desc;
 
 
 -- 需求18: 统计客户总数和带有传真号码的客户数量
 -- 需要字段：all_customers_count 和 customers_with_fax_count
+SELECT COUNT(1) as all_customers_count, COUNT(fax) as customers_with_fax_count
+FROM customers;
 
 
 -- 需求19: 我们要在报表中显示每种产品的库存量，但我们不想简单地将“ units_in_stock”列放在报表中。报表中只需要一个总体级别，例如低，高：
@@ -190,6 +236,16 @@ WHERE YEAR(order_date) = 2016
 -- 50到100的可用性为中等(moderate)
 -- 小于50的为低(low)
 -- 零库存 为 (none)
+SELECT product_id,
+       product_name,
+       units_in_stock,
+       CASE
+           WHEN units_in_stock > 100 THEN '高'
+           WHEN units_in_stock = 0 THEN 'none'
+           WHEN units_in_stock < 50 THEN '低'
+           ELSE '中'
+           END AS units_in_stock_level
+FROM products;
 
 
 -- 需求20: 创建一个报表，统计员工的经验水平
