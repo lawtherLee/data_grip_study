@@ -254,13 +254,38 @@ FROM products;
 -- 'junior' 2014年1月1日以后雇用的员工
 -- 'middle' 在2013年1月1日之后至2014年1月1日之前雇用的员工
 -- 'senior' 2013年1月1日或之前雇用的员工
+SELECT first_name,
+       last_name,
+       hire_date,
+       CASE
+           WHEN hire_date >= '2014-01-01' THEN 'junior'
+           WHEN hire_date <= '2013-01-01' THEN 'senior'
+           ELSE 'middle'
+           END AS experience
+FROM employees;
 
 -- 需求21: 我们的商店要针对北美地区的用户做促销活动：任何运送到北美地区（美国，加拿大) 的包裹免运费。 创建报表，查询订单编号为10720~10730 活动后的运费价格
-
+SELECT order_id,
+       order_date,
+       ship_country,
+       freight,
+       IF(ship_country IN ('USA', 'Canada'), 0, freight) AS new_freight
+FROM orders
+WHERE order_id BETWEEN 10720 AND 10730;
 
 -- 需求22: 需求：创建客户基本信息报表, 包含字段：客户id customer_id, 公司名字 company_name
 -- 所在国家 country, 使用语言language, 使用语言language 的取值按如下规则
--- Germany, Switzerland, and Austria 语言为德语 'German', 	UK, Canada, the USA, and Ireland -- 语言为英语 'English', 其他所有国家 'Other'
+-- Germany, Switzerland, and Austria 语言为德语 'German',
+-- UK, Canada, the USA, and Ireland -- 语言为英语 'English', 其他所有国家 'Other'
+SELECT customer_id,
+       company_name,
+       country,
+       CASE
+           WHEN country IN ('Germany'', ''Switzerland'', ''Austria') THEN 'German'
+           WHEN country IN ('UK', 'Canada', 'USA', 'Ireland') THEN 'English'
+           ELSE 'other'
+           END AS language
+FROM customers;
 
 
 -- 需求23: 需求：创建报表将所有产品划分为素食和非素食两类
@@ -268,41 +293,162 @@ FROM products;
 -- 膳食类型 diet_type:
 -- 	非素食 'Non-vegetarian' 商品类别字段的值为 'Meat/Poultry' 和 'Seafood'.
 -- 	素食
+SELECT product_id,
+       product_name,
+       category_name,
+       IF(category_name IN ('Meat/Poultry', 'Seafood'), 'Non-vegetarian', 'Vegetarian') AS diet_type
+FROM products p
+         JOIN categories c ON c.category_id = p.category_id;
 
 -- 需求24: 在引入北美地区免运费的促销策略时，我们也想知道运送到北美地区和其它国家地区的订单数量
 -- 促销策略, 参见需求21的代码.
-
+# step1: 查看运输到北美的订单总数.
+SELECT order_id, ship_country
+FROM orders
+WHERE ship_country IN ('USA', 'Canada');
+# step2: 完成需求.
+SELECT IF(ship_country IN ('USA', 'Canada'), '北美地区', '其他地区') AS new_addr, COUNT(1) AS total_cnt
+FROM orders
+GROUP BY new_addr;
+# 方法2
+SELECT COUNT(IF(ship_country IN ('USA', 'Canada'), 1, NULL))     AS 北美地区订单总数,
+       COUNT(IF(ship_country NOT IN ('USA', 'Canada'), 1, NULL)) AS 其它地区订单总数
+FROM orders;
 
 -- 需求25: 创建报表统计供应商来自那个大洲, 报表中包含两个字段：供应商来自哪个大洲（supplier_continent ）和 供应产品种类数量（product_count）
 -- 供应商来自哪个大洲（supplier_continent ）包含如下取值：
 -- 'North America' （供应商来自 'USA' 和 'Canada'.）
 -- 'Asia' （供应商来自 'Japan' 和 'Singapore')
 -- 'Other' (其它国家)
+SELECT CASE
+           WHEN country IN ('USA', 'Canada') THEN 'North America'
+           WHEN country IN ('Japan', 'Singapore') THEN 'Asia'
+           ELSE 'other'
+           END           AS supplier_continent,
+       COUNT(product_id) AS product_count
+FROM products p
+         JOIN suppliers s ON p.supplier_id = s.supplier_id
+GROUP BY supplier_continent;
 
+# 验真: Asia,9
+select *
+from suppliers
+where country in ('Japan', 'Singapore'); # 3 条, 公司的id为: 4, 6, 20
+select *
+from products
+where supplier_id in (4, 6, 20);
+# 共 9条数据.
 
 -- 需求26: 需求：创建一个简单的报表来统计员工的年龄情况
 -- 报表中包含如下字段
 -- 年龄（ age ）：生日大于1980年1月1日 'young' ，其余'old'
 --  员工数量 （ employee_count）
+SELECT CASE
+           WHEN birth_date > '1980-01-01' THEN 'young'
+           ELSE 'old'
+           END  AS age,
+       COUNT(1) AS employee_count
+FROM employees
+GROUP BY age;
+
+SELECT COUNT(IF(birth_date > '1980-01-01', 1, null)) AS employee_count_old,
+       # COUNT(IF(birth_date > '1980-01-01', null, 1)) AS employee_count_young
+       COUNT(1)                                      AS employee_count_young
+FROM employees;
 
 
 -- 需求27: 统计客户的contact_title 字段值为 ’Owner' 的客户数量
 -- 查询结果有两个字段：represented_by_owner 和 not_represented_by_owner
-
+SELECT COUNT(IF(contact_title = 'Owner', 1, null))  AS represented_by_owner,
+       COUNT(IF(contact_title != 'Owner', 1, null)) AS not_represented_by_owner
+FROM customers;
+# 验真
+select *
+from customers
+where contact_title = 'Owner';
+# 17条
 
 -- 需求28: Washington (WA) 是 Northwind的主要运营地区，统计有多少订单是由华盛顿地区的员工处理的，
 -- 多少订单是有其它地区的员工处理的
 -- 结果字段： orders_wa_employees 和 orders_not_wa_employees
+SELECT COUNT(IF(region = 'WA', 1, null))  AS orders_wa_employees,
+       COUNT(IF(region != 'WA', 1, null)) AS orders_not_wa_employees
+FROM orders o
+         JOIN employees e ON o.employee_id = e.employee_id;
+# 验真.
+SELECT employee_id
+FROM employees
+WHERE region = 'WA'; # 看看哪些员工属于 华盛顿的.
+SELECT *
+FROM orders
+WHERE employee_id IN (1, 2, 3, 4, 8); # 605
+SELECT *
+FROM orders
+WHERE employee_id IN (SELECT employee_id FROM employees WHERE region = 'WA');
+# 605
 
 
 -- 需求29: 创建报表，统计不同类别产品的库存量，将库存量分成两类 >30 和 <=30 两档分别统计数量
 -- 报表包含三个字段, 类别名称 category_name, 库存充足 high_availability, 库存紧张 low_availability
 -- 简化需求: 统计不同类别产品的库存量
+SELECT category_name, SUM(units_in_stock) AS total_units
+FROM products p
+         JOIN categories c ON p.category_id = c.category_id
+GROUP BY category_name;
+# 最终版.
+# 思路1: 基于分类名, 库存量分组, 进行统计, 有结果, 但是不满足需求(要的3列)
+SELECT category_name,
+       CASE
+           WHEN units_in_stock > 30 THEN 'high_availability'
+           ELSE 'low_availability'
+           END             AS availability,
+       SUM(units_in_stock) AS total_units
+FROM categories c
+         JOIN products p ON p.category_id = c.category_id
+GROUP BY category_name, availability;
+# 根据 类别名, 库存量分组.
+# 思路2: 分组计算时, 只计算我们要的数据即可.
+SELECT category_name,
+       SUM(IF(units_in_stock > 30, units_in_stock, 0))  AS high_availability,
+       SUM(IF(units_in_stock <= 30, units_in_stock, 0)) AS low_availability
+FROM categories c
+         JOIN products p ON c.category_id = p.category_id
+GROUP BY category_name;
 
 
 -- 需求30: 创建报表统计运输到法国的的订单中，打折和未打折订单的总数量
 -- 结果包含两个字段：full_price （原价）和 discounted_price（打折）
--- select ship_country, discount from orders o, order_items oi where ship_country='France' and o.order_id = oi.order_id;  -- 184
+# step1: 计算 原价的总订单数量, 不严谨, 下边这种写法会导致: 如果某个订单中, 有一个商品打折了，那么该订单就计算了2次.
+SELECT COUNT(DISTINCT o.order_id) AS discount_count
+FROM orders o
+         JOIN order_items oi ON o.order_id = oi.order_id
+WHERE oi.discount != 0;
+
+# step2: 计算每个订单的 折扣总值.
+SELECT o.order_id, SUM(discount) AS total_discount
+FROM orders o
+         JOIN order_items oi ON o.order_id = oi.order_id
+GROUP BY o.order_id;
+# step3: 计算最终结果, 原价的多少订单, 折扣的多少订单.
+SELECT o.order_id,
+       SUM(discount)                   AS total_discount,
+       IF(SUM(discount) = 0, 1, null)  AS full_price,
+       IF(SUM(discount) != 0, 1, null) AS discounted_price
+FROM orders o
+         JOIN order_items oi ON o.order_id = oi.order_id
+GROUP BY o.order_id;
+
+SELECT COUNT(IF(total_discount = 0, 1, null))  AS full_price,
+       COUNT(IF(total_discount != 0, 1, null)) AS discount_price
+FROM (SELECT SUM(discount) AS total_discount
+      FROM orders o
+               JOIN order_items oi ON o.order_id = oi.order_id
+      WHERE ship_country = 'France'
+      GROUP BY o.order_id) t1;
+# 验真.
+SELECT COUNT(1)
+FROM orders
+WHERE ship_country = 'France';
 
 
 -- 需求31: 输出报表，统计不同供应商供应商品的总库存量，以及高价值商品的库存量（单价超过40定义为高价值）
@@ -311,6 +457,18 @@ FROM products;
 -- 供应商公司名 company_name
 -- 由该供应商提供的总库存 all_units
 -- 由该供应商提供的高价值商品库存 expensive_units
+SELECT p.supplier_id,
+       company_name                                供应商名称,
+       SUM(units_in_stock)                         all_units,
+       SUM(IF(unit_price > 40, units_in_stock, 0)) expensive_units
+FROM suppliers s
+         JOIN products p ON p.supplier_id = s.supplier_id
+GROUP BY p.supplier_id, company_name;
+# 验真: 4,Tokyo Traders,64,29
+SELECT product_id, supplier_id, unit_price, units_in_stock
+FROM products
+WHERE supplier_id = 4;
+
 
 -- 需求32: 创建报表来为每种商品添加价格标签，贵、中等、便宜
 -- 结果包含如下字段：product_id, product_name, unit_price, 和 price_level
@@ -318,7 +476,15 @@ FROM products;
 -- 'expensive' 单价高于100的产品
 -- 'average' 单价高于40但不超过100的产品
 -- 'cheap' 其他产品
-
+SELECT product_id,
+       product_name,
+       unit_price,
+       CASE
+           WHEN unit_price > 100 THEN 'expensive'
+           WHEN unit_price <= 40 THEN 'cheap'
+           ELSE 'average'
+           END AS price_level
+FROM products;
 
 -- 需求33: 制作报表统计所有订单的总价（不计任何折扣）对它们进行分类。
 -- 包含以下字段：
@@ -329,10 +495,32 @@ FROM products;
 -- 	'high' 总价超过2000美元
 -- 	'average'，总价在$ 600到$ 2,000之间，包括两端
 -- 	'low' 总价低于$ 600
+# 思路1: 子查询写法.
+SELECT *,
+       CASE
+           WHEN total_price > 2000 THEN 'high'
+           WHEN total_price < 600 THEN 'low'
+           ELSE 'average'
+           END AS price_group
+FROM (SELECT order_id, SUM(quantity * unit_price) total_price FROM order_items GROUP BY order_id) t1;
 
+# 思路2: 直接写聚合函数搞定.
+SELECT order_id,
+       SUM(quantity * unit_price) total_price,
+       CASE
+           WHEN SUM(quantity * unit_price) > 2000 THEN 'high'
+           WHEN SUM(quantity * unit_price) < 600 THEN 'low'
+           ELSE 'average'
+           END AS                 price_group
+FROM order_items
+GROUP BY order_id;
 
 -- 需求34: 统计所有订单的运费，将运费高低分为三档
 -- 报表中包含三个字段
 -- low_freight freight值小于“ 40.0”的订单数
 -- avg_freight freight值大于或等于“ 40.0”但小于“ 80.0”的订单数
 -- high_freight freight值大于或等于“ 80.0”的订单数
+SELECT COUNT(IF(freight < 40, 1, null))                   low_freight,
+       COUNT(IF(freight >= 40 AND freight < 80, 1, null)) avg_freight,
+       COUNT(IF(freight >= 80, 1, null))                  high_freight
+FROM orders;
