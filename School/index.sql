@@ -1,108 +1,3 @@
-SHOW DATABASES;
-
-CREATE DATABASE IF NOT EXISTS school;
-
-# 学生表 Student
-CREATE TABLE student
-(
-    SId   varchar(10),
-    Sname varchar(10),
-    Sage  datetime,
-    Ssex  varchar(10)
-);
-# 科目表 Course
-CREATE TABLE course
-(
-    CId   VARCHAR(10),
-    Cname NVARCHAR(10),
-    TId   VARCHAR(10)
-);
-# 教师表 Teacher
-CREATE TABLE teacher
-(
-    TId   VARCHAR(10),
-    Tname VARCHAR(10)
-);
-# 成绩表 SC
-CREATE TABLE sc
-(
-    SId   VARCHAR(10),
-    CId   VARCHAR(10),
-    score DECIMAL(18, 1)
-);
-# insert into Student
-# values ('01', '赵雷', '1990-01-01', '男');
-# insert into Student
-# values ('02', '钱电', '1990-12-21', '男');
-# insert into Student
-# values ('03', '孙风', '1990-12-20', '男');
-# insert into Student
-# values ('04', '李云', '1990-12-06', '男');
-# insert into Student
-# values ('05', '周梅', '1991-12-01', '女');
-# insert into Student
-# values ('06', '吴兰', '1992-01-01', '女');
-# insert into Student
-# values ('07', '郑竹', '1989-01-01', '女');
-# insert into Student
-# values ('09', '张三', '2017-12-20', '女');
-# insert into Student
-# values ('10', '李四', '2017-12-25', '女');
-# insert into Student
-# values ('11', '李四', '2012-06-06', '女');
-# insert into Student
-# values ('12', '赵六', '2013-06-13', '女');
-# insert into Student
-# values ('13', '孙七', '2014-06-01', '女');
-# insert into Course
-# values ('01', '语文', '02');
-# insert into Course
-# values ('02', '数学', '01');
-# insert into Course
-# values ('03', '英语', '03');
-# insert into Teacher
-# values ('01', '张三');
-# insert into Teacher
-# values ('02', '李四');
-# insert into Teacher
-# values ('03', '王五');
-# insert into SC
-# values ('01', '01', 80);
-# insert into SC
-# values ('01', '02', 90);
-# insert into SC
-# values ('01', '03', 99);
-# insert into SC
-# values ('02', '01', 70);
-# insert into SC
-# values ('02', '02', 60);
-# insert into SC
-# values ('02', '03', 80);
-# insert into SC
-# values ('03', '01', 80);
-# insert into SC
-# values ('03', '02', 80);
-# insert into SC
-# values ('03', '03', 80);
-# insert into SC
-# values ('04', '01', 50);
-# insert into SC
-# values ('04', '02', 30);
-# insert into SC
-# values ('04', '03', 20);
-# insert into SC
-# values ('05', '01', 76);
-# insert into SC
-# values ('05', '02', 87);
-# insert into SC
-# values ('06', '01', 31);
-# insert into SC
-# values ('06', '03', 34);
-# insert into SC
-# values ('07', '02', 89);
-# insert into SC
-# values ('07', '03', 98);
-
 # 1. 查询 "01" 课程比 "02" 课程成绩高的学生的信息及课程分数
 # 1.1 同时存在 "01" 和 "02" 课程的情况
 SELECT s.*, sc1.score AS c01_score, sc2.score AS c02_score
@@ -195,7 +90,65 @@ WHERE NOT EXISTS(SELECT 1
                    AND t.Tname = '张三');
 
 # 11. 查询两门及其以上不及格课程的同学的学号，姓名及其平均成绩
+SELECT s.SId, s.Sname, ROUND(AVG(sc.score), 1) AS 平均成绩
+FROM student s
+         JOIN sc ON s.SId = sc.SId
+WHERE sc.score < 60
+GROUP BY s.SId, s.Sname
+HAVING COUNT(*) >= 2;
 
+# 12. 检索 "01" 课程分数小于 60，按分数降序排列的学生信息
+SELECT *
+FROM student s
+         JOIN sc ON s.SId = sc.SId
+WHERE sc.CId = '01'
+  AND sc.score < 60
+ORDER BY sc.score DESC;
+
+# 13. 按平均成绩从高到低显示所有学生的所有课程的成绩以及平均成绩
+SELECT SId,
+       MAX(IF(CId = '01', score, null)) AS 语文,
+       MAX(IF(CId = '02', score, null)) AS 数学,
+       MAX(IF(CId = '03', score, null)) AS 英语,
+       ROUND(AVG(score), 1)             AS 平均成绩
+FROM sc
+GROUP BY SId
+ORDER BY 平均成绩 DESC;
+
+# 14. 查询各科成绩最高分、最低分、平均分、及格率、中等率、优良率、优秀率
+SELECT c.CId,
+       c.Cname,
+       MAX(sc.score)                                            AS 最高分,
+       MIN(sc.score)                                            AS 最低分,
+       ROUND(AVG(sc.score), 1)                                  AS 平均分,
+       ROUND(SUM(score > 60) / COUNT(*) * 100, 2)               AS 及格率,
+       ROUND(SUM(score BETWEEN 70 AND 80) / COUNT(*) * 100, 2)  AS 中等率,
+       ROUND(SUM(score BETWEEN 80 AND 90) / COUNT(*) * 100, 2)  AS 优良率,
+       ROUND(SUM(score BETWEEN 90 AND 100) / COUNT(*) * 100, 2) AS 优秀率
+FROM course c
+         JOIN sc ON c.CId = sc.SId
+GROUP BY c.CId, c.Cname
+ORDER BY COUNT(*) DESC, c.CId;
+
+# 15 各科成绩排名（同分跳名次 RANK）
+SELECT sc.CId,
+       c.Cname,
+       s.SId,
+       s.Sname,
+       sc.score,
+       RANK() OVER (PARTITION BY sc.CId ORDER BY sc.score DESC ) AS 成绩排名
+FROM sc
+         JOIN course c ON sc.CId = c.CId
+         JOIN student s ON sc.SId = s.SId;
+
+# 16 学生总成绩排名（同分不跳 DENSE_RANK）
+SELECT s.SId,
+       Sname,
+       IFNULL(SUM(sc.score), 0)                                    AS 总成绩,
+       DENSE_RANK() over (ORDER BY IFNULL(SUM(sc.score), 0) DESC ) AS 总分排名
+FROM student s
+         JOIN sc ON s.SId = sc.SId
+GROUP BY s.SId, s.Sname;
 
 # 30. 查询存在不及格的课程
 SELECT DISTINCT c.CId, c.Cname
@@ -303,3 +256,110 @@ WHERE MONTH(Sage) = MONTH(NOW());
 SELECT *
 FROM student
 WHERE MONTH(Sage) = IF(MONTH(NOW()) = 12, 1, MONTH(NOW()) + 1);
+
+# SHOW DATABASES;
+#
+# CREATE DATABASE IF NOT EXISTS school;
+
+# 学生表 Student
+# CREATE TABLE student
+# (
+#     SId   varchar(10),
+#     Sname varchar(10),
+#     Sage  datetime,
+#     Ssex  varchar(10)
+# );
+# # 科目表 Course
+# CREATE TABLE course
+# (
+#     CId   VARCHAR(10),
+#     Cname NVARCHAR(10),
+#     TId   VARCHAR(10)
+# );
+# # 教师表 Teacher
+# CREATE TABLE teacher
+# (
+#     TId   VARCHAR(10),
+#     Tname VARCHAR(10)
+# );
+# # 成绩表 SC
+# CREATE TABLE sc
+# (
+#     SId   VARCHAR(10),
+#     CId   VARCHAR(10),
+#     score DECIMAL(18, 1)
+# );
+# insert into Student
+# values ('01', '赵雷', '1990-01-01', '男');
+# insert into Student
+# values ('02', '钱电', '1990-12-21', '男');
+# insert into Student
+# values ('03', '孙风', '1990-12-20', '男');
+# insert into Student
+# values ('04', '李云', '1990-12-06', '男');
+# insert into Student
+# values ('05', '周梅', '1991-12-01', '女');
+# insert into Student
+# values ('06', '吴兰', '1992-01-01', '女');
+# insert into Student
+# values ('07', '郑竹', '1989-01-01', '女');
+# insert into Student
+# values ('09', '张三', '2017-12-20', '女');
+# insert into Student
+# values ('10', '李四', '2017-12-25', '女');
+# insert into Student
+# values ('11', '李四', '2012-06-06', '女');
+# insert into Student
+# values ('12', '赵六', '2013-06-13', '女');
+# insert into Student
+# values ('13', '孙七', '2014-06-01', '女');
+# insert into Course
+# values ('01', '语文', '02');
+# insert into Course
+# values ('02', '数学', '01');
+# insert into Course
+# values ('03', '英语', '03');
+# insert into Teacher
+# values ('01', '张三');
+# insert into Teacher
+# values ('02', '李四');
+# insert into Teacher
+# values ('03', '王五');
+# insert into SC
+# values ('01', '01', 80);
+# insert into SC
+# values ('01', '02', 90);
+# insert into SC
+# values ('01', '03', 99);
+# insert into SC
+# values ('02', '01', 70);
+# insert into SC
+# values ('02', '02', 60);
+# insert into SC
+# values ('02', '03', 80);
+# insert into SC
+# values ('03', '01', 80);
+# insert into SC
+# values ('03', '02', 80);
+# insert into SC
+# values ('03', '03', 80);
+# insert into SC
+# values ('04', '01', 50);
+# insert into SC
+# values ('04', '02', 30);
+# insert into SC
+# values ('04', '03', 20);
+# insert into SC
+# values ('05', '01', 76);
+# insert into SC
+# values ('05', '02', 87);
+# insert into SC
+# values ('06', '01', 31);
+# insert into SC
+# values ('06', '03', 34);
+# insert into SC
+# values ('07', '02', 89);
+# insert into SC
+# values ('07', '03', 98);
+
+
