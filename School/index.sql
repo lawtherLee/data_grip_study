@@ -150,6 +150,43 @@ FROM student s
          JOIN sc ON s.SId = sc.SId
 GROUP BY s.SId, s.Sname;
 
+# 17 各科分数段人数 + 占比
+SELECT c.CId,
+       c.Cname,
+       SUM(sc.score BETWEEN 85 AND 100) AS `100-85`,
+       SUM(sc.score BETWEEN 70 AND 85)  AS `84-70`,
+       SUM(sc.score BETWEEN 60 AND 70)  AS `69-60`,
+       SUM(sc.score < 60)               AS `60以下`
+FROM course c
+         JOIN sc ON c.CId = sc.CId
+GROUP BY c.CId, c.Cname;
+
+# 18 各科前三名
+SELECT *
+FROM (SELECT c.Cname, sc.SId, s.Sname, sc.score, ROW_NUMBER() over (PARTITION BY sc.CId ORDER BY sc.score DESC ) AS 排名
+      FROM sc
+               JOIN course c ON sc.CId = c.CId
+               JOIN student s ON sc.SId = s.SId) t
+WHERE t.排名 <= 3;
+
+# 19 每门课选修人数
+SELECT c.CId, c.Cname, COUNT(sc.SId) AS 选修人数
+FROM course c
+         LEFT JOIN sc ON c.CId = sc.CId
+GROUP BY c.CId, c.Cname;
+
+# 20 只选 2 门课的学生
+SELECT s.SId, s.Sname
+FROM student s
+         JOIN sc ON s.SId = sc.SId
+GROUP BY s.SId, s.Sname
+HAVING COUNT(sc.CId) = 2;
+
+# 21 男女人数统计
+SELECT Ssex AS 性别, COUNT(*) AS 人数
+FROM student s
+GROUP BY s.Ssex;
+
 # 30. 查询存在不及格的课程
 SELECT DISTINCT c.CId, c.Cname
 FROM Course c
