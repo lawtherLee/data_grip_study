@@ -187,6 +187,59 @@ SELECT Ssex AS 性别, COUNT(*) AS 人数
 FROM student s
 GROUP BY s.Ssex;
 
+# 22 名字含「风」的学生
+SELECT *
+FROM student
+WHERE Sname LIKE '%风%';
+
+# 23 同名学生统计
+SELECT s.Sname, COUNT(*) AS 同名人数
+FROM student s
+GROUP BY s.Sname
+HAVING COUNT(*) > 2;
+
+# 24 1990 年出生学生
+SELECT *
+FROM Student
+WHERE YEAR(Sage) = 1990;
+
+# 25 每门课平均成绩排序
+SELECT c.CId, c.Cname, ROUND(AVG(sc.score), 1) AS 平均成绩
+FROM course c
+         JOIN sc ON c.CId = sc.CId
+GROUP BY c.CId, c.Cname
+ORDER BY 平均成绩, c.CId;
+
+# 26 平均成绩≥85 的优等生
+SELECT s.SId, s.Sname, ROUND(AVG(sc.score), 1) AS 平均成绩
+FROM student s
+         JOIN sc ON sc.SId = s.SId
+GROUP BY s.SId, s.Sname
+HAVING AVG(sc.score) > 85;
+
+# 27 数学不及格学生
+SELECT s.Sname, sc.score
+FROM student s
+         JOIN sc ON sc.SId = s.SId
+         JOIN course c ON c.CId = sc.CId
+WHERE c.Cname = '数学'
+  AND sc.score < 60;
+
+# 28 所有学生 + 所有课程成绩（含空）
+SELECT s.SId, s.Sname, c.Cname, sc.score
+FROM student s
+         LEFT JOIN sc ON s.SId = sc.SId
+         LEFT JOIN course c ON sc.CId = c.CId
+ORDER BY s.SId;
+
+# 29 有任意一门课 > 70 分的学生
+SELECT DISTINCT s.Sname, c.Cname, sc.score
+FROM student s
+         JOIN sc ON s.SId = sc.SId
+         JOIN course c ON c.CId = sc.CId
+WHERE sc.score > 70;
+
+
 # 30. 查询存在不及格的课程
 SELECT DISTINCT c.CId, c.Cname
 FROM Course c
